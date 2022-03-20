@@ -38,6 +38,9 @@ def sigmoid(x):
 def derivative_sigmoid(x):
     return x * (1.0-x)
 
+def relu(x):
+    return np.maximum(0,x)
+
 def mse(x,y):
     return ((x-y)**2)*0.5
 def derivative_mse(x,y):
@@ -67,20 +70,21 @@ def Cross_Entropy(y, labels):
     cost = np.squeeze(cost)  # makes sure cost is the dimension we expect.
     return cost
 def derivative_Cross_Entropy(y, labels):
-    a = labels/y 
+    a = np.divide(labels,y)
     # print("a",a)
-    b = (1-labels)/ (1-y)
+    b = np.divide(1-labels, 1-y)
     # print("b",b)
     dc = - (a - b)
-    # print("dc",dc)
+    print("dc",dc)
     return dc
+
 
 
 
 
 class Linear():
     def __init__(self,in_c,out_c):
-        self.weight = np.random.randn(in_c, out_c)
+        self.weight = np.random.randn(in_c, out_c) * 0.01
         print("self.weight",self.weight.shape)
         self.x = None
         self.y = None
@@ -90,7 +94,7 @@ class Linear():
         return self.weight
     def forward(self,x):
         self.x = x
-        y = x@self.weight  # x = [21,2], W = [2,1] ,y = [21,1]
+        y = np.dot(x,self.weight)   # x = [21,2], W = [2,1] ,y = [21,1]
         self.y = y
         return y
     def backward(self,grad):
@@ -175,19 +179,20 @@ def backward(labels, y, result_dict, fun_list,lr):
     grad_dict = {}
      # x -w0> z0 -activate> a0 -w1> z1 -activate> a1 -w2> z2 -activate> a2 == y  <-- LOSS --> labels
     # y = a2
-    dL_a2 = derivative_Cross_Entropy(y,labels).mean() # L = loss(a)
-    dL_z2 = dL_a2 * derivative_sigmoid(result_dict['a2']) # a2 = sigomid(z2)
-    grad_dict['w2'] = result_dict['a1'].T @ dL_z2 # z2 = a1w2 --> dw2 = a1.T @ G
+    dL_a2 = derivative_Cross_Entropy(y,labels) # L = loss(a)
+    dL_z2 = dL_a2 * derivative_sigmoid(result_dict['a2']) # a0 = sigmoid(z0)
+    grad_dict['w2'] = 1/m * np.dot(result_dict['a1'].T , dL_z2) # z2 = a1w2 --> dw2 = a1.T @ G
+
 
     dL_a1 =  dL_z2 @ result_dict['w2'].T # z2 = a1w2 --> da1 = G @ w2.T
-    dL_z1 = dL_a1 * derivative_sigmoid(result_dict['a1']) # a1 = sigmoid(z1)
-    grad_dict['w1'] = result_dict['a0'].T @ dL_z1 # z1 = a0w1 --> dw1 = a0.T @ G
+    dL_z1 = np.array(dL_a1,copy=True) # a1 = relu(z1)
+    dL_z1[result_dict['z1']<=0] = 0
+    grad_dict['w1'] = 1/m * np.dot(result_dict['a0'].T , dL_z1) # z1 = a0w1 --> dw1 = a0.T @ G
     
     dL_a0 = dL_z1 @ result_dict['w1'].T # z1 = a0w1 --> da0 = G @ w1T
-    dL_z0 = dL_a0 * derivative_sigmoid(result_dict['a0']) # a0 = sigmoid(z0)
-    grad_dict['w0'] = result_dict['x'].T @ dL_z0 # z0 = xw0 --> dw0 = x.T @ G
-
-    print(grad_dict)
+    dL_z0 = np.array(dL_a0,copy=True)  # a0 = relu(z0)
+    dL_z0[result_dict['z0']<=0] = 0
+    grad_dict['w0'] = 1/m * np.dot(result_dict['x'].T , dL_z0) # z0 = xw0 --> dw0 = x.T @ G
 
     
     """update weights """
@@ -210,26 +215,35 @@ def train(data, labels,fun_list,lr):
         result_dict[f"w{idx}"] = w
         # print(f"z{idx}",y.shape)
         result_dict[f'z{idx}'] = y
-        y = sigmoid(y)
+        if idx == len(fun_list)-1:
+            y = sigmoid(y)   
+            print("last") 
+        else:
+            y = relu(y)
         # print(f"a{idx}",y.shape)
         result_dict[f'a{idx}'] = y
     
     # print(labels)
     
     
-    loss = Cross_Entropy(y,labels).mean()
+    loss = Cross_Entropy(y,labels)
 
 
     """backward"""
-    backward2( labels, y, result_dict, fun_list,lr)
+    backward( labels, y, result_dict, fun_list,lr)
 
     return loss,y
 
 def show_results(x,y,pred_y):
-    plt.subplot(1,2,1)
+    plt.subplot(1,3,1)
+    plt.title("Loss",fontsize=18)
+    plt.plot(loss_list)
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.subplot(1,3,2)
     plt.title("Ground truth",fontsize=18)
     plot_data(x,y)
-    plt.subplot(1,2,2) 
+    plt.subplot(1,3,3) 
     plt.title("predict results",fontsize=18)
     plot_data(x,pred_y)
     plt.show()
@@ -243,10 +257,10 @@ if __name__ == '__main__':
     # data,labels = generate_XOR_easy()    
     # plot_data(data,labels)
     """create model"""
-    channels = [2,8,6,1]
+    channels = [2,8,4,1]
     fun_list = [Linear(in_c,out_c)  for in_c,out_c in zip(channels[:-1],channels[1:])]
     """ start train"""
-    steps = 100
+    steps = 500
     loss_list = []
     acc_list = []
     pred_y = None
@@ -259,23 +273,13 @@ if __name__ == '__main__':
         pred_y = y
         print(f"[step:{step+1}/{steps}] loss: {loss}")
 
-        if step % 1000:
+        if step % 100:
             lr = lr * 0.5
-    print(pred_y)
 
     # for a,b,c in zip(loss_list,pred_y,labels):
     #     print(a,b,c)
     # # print(loss_list)
-
-    plt.plot(loss_list)
-    plt.title('Loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.show()
-
-    show_results(data,labels,1.0*(pred_y>0.37))
-    
-
-
+    print(pred_y)
     
     
+    show_results(data,labels,1.0*(pred_y>0.5))
