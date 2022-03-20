@@ -45,35 +45,35 @@ def derivative_mse(x,y):
     # return 2*(x-y)
 
 
-# def Cross_Entropy(y, labels):
-#     cost = -np.log((1-labels) + ((2*labels-1)*y))
-#     # print(cost)
-#     return cost
-#     # if labels == 1:
-#     #   return -np.log(y)
-#     # else:
-#     #   return -np.log(1 - y)
-
-# def derivative_Cross_Entropy(y, labels):
-#     dc = (1-2*labels)/((1-labels) + ((2*labels-1)*y))
-#     # print(dc)
-#     return dc
-
 def Cross_Entropy(y, labels):
-    y = y.reshape(1,-1)
-    labels = labels.reshape(1,-1)
-    m = labels.shape[1]   
-    cost = (1./m) * (-np.dot(labels,np.log(y).T) - np.dot(1-labels, np.log(1-y).T))
-    cost = np.squeeze(cost)  # makes sure cost is the dimension we expect.
+    cost = -np.log((1-labels) + ((2*labels-1)*y))
+    # print(cost)
     return cost
+    # if labels == 1:
+    #   return -np.log(y)
+    # else:
+    #   return -np.log(1 - y)
+
 def derivative_Cross_Entropy(y, labels):
-    a = labels/y 
-    # print("a",a)
-    b = (1-labels)/ (1-y)
-    # print("b",b)
-    dc = - (a - b)
-    # print("dc",dc)
+    dc = (1-2*labels)/((1-labels) + ((2*labels-1)*y))
+    # print(dc)
     return dc
+
+# def Cross_Entropy(y, labels):
+#     y = y.reshape(1,-1)
+#     labels = labels.reshape(1,-1)
+#     m = labels.shape[1]   
+#     cost = (1./m) * (-np.dot(labels,np.log(y).T) - np.dot(1-labels, np.log(1-y).T))
+#     cost = np.squeeze(cost)  # makes sure cost is the dimension we expect.
+#     return cost
+# def derivative_Cross_Entropy(y, labels):
+#     a = labels/y 
+#     # print("a",a)
+#     b = (1-labels)/ (1-y)
+#     # print("b",b)
+#     dc = - (a - b)
+#     # print("dc",dc)
+#     return dc
 
 
 

@@ -69,34 +69,33 @@ class Relu():
         return self.y
     def backward(self,grad,*kwargs):
         new_grad = np.array(grad,copy=True)  # a0 = relu(z0)
-        
         new_grad[self.x<=0] = 0
         return new_grad
-def Cross_Entropy(y, labels):
-    m = labels.shape[1]   
-    cost = (1./m) * (-np.dot(labels,np.log(y).T) - np.dot(1-labels, np.log(1-y).T))
-    cost = np.squeeze(cost)  # makes sure cost is the dimension we expect.
-    return cost
-def derivative_Cross_Entropy(y, labels):
-    a = np.divide(labels,y +1e-10)
-    # print("a",a)
-    b = np.divide(1-labels, 1-y +1e-10)
-    # print("b",b)
-    dc = -(a - b)
-    return dc
 # def Cross_Entropy(y, labels):
-#     cost = -np.log((1-labels) + ((2*labels-1)*y))
-#     # print(cost)
-#     return cost.mean()
-#     # if labels == 1:
-#     #   return -np.log(y)
-#     # else:
-#     #   return -np.log(1 - y)
-
+#     m = labels.shape[1]   
+#     cost = (1./m) * (-np.dot(labels,np.log(y).T) - np.dot(1-labels, np.log(1-y).T))
+#     cost = np.squeeze(cost)  # makes sure cost is the dimension we expect.
+#     return cost
 # def derivative_Cross_Entropy(y, labels):
-#     dc = (1-2*labels)/((1-labels) + ((2*labels-1)*y))
-#     # print(dc)
+#     a = np.divide(labels,y +1e-10)
+#     # print("a",a)
+#     b = np.divide(1-labels, 1-y +1e-10)
+#     # print("b",b)
+#     dc = -(a - b)
 #     return dc
+def Cross_Entropy(y, labels):
+    cost = -np.log((1-labels) + ((2*labels-1)*y))
+    # print(cost)
+    return cost.mean()
+    # if labels == 1:
+    #   return -np.log(y)
+    # else:
+    #   return -np.log(1 - y)
+
+def derivative_Cross_Entropy(y, labels):
+    dc = (1-2*labels)/((1-labels) + ((2*labels-1)*y))
+    # print(dc)
+    return dc
 def mse(x,y):
     return (((x-y)**2)*0.5).mean()
 def derivative_mse(x,y):
@@ -112,9 +111,9 @@ def train(x, labels,fun_list,lr):
         #     cnt = 1
         y = f.forward(y)
 
-    loss = Cross_Entropy(y,labels)
+    loss = mse(y,labels)
     """backward"""
-    grad = derivative_Cross_Entropy(y,labels)
+    grad = derivative_mse(y,labels)
     # print(grad)
     fun_list.reverse()
     for f in fun_list:
