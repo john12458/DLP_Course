@@ -72,31 +72,31 @@ class Relu():
         
         new_grad[self.x<=0] = 0
         return new_grad
-# def Cross_Entropy(y, labels):
-#     m = labels.shape[1]   
-#     cost = (1./m) * (-np.dot(labels,np.log(y).T) - np.dot(1-labels, np.log(1-y).T))
-#     cost = np.squeeze(cost)  # makes sure cost is the dimension we expect.
-#     return cost
-# def derivative_Cross_Entropy(y, labels):
-#     a = np.divide(labels,y +1e-10)
-#     # print("a",a)
-#     b = np.divide(1-labels, 1-y +1e-10)
-#     # print("b",b)
-#     dc = -(a - b)
-#     return dc
 def Cross_Entropy(y, labels):
-    cost = -np.log((1-labels) + ((2*labels-1)*y))
-    # print(cost)
-    return cost.mean()
-    # if labels == 1:
-    #   return -np.log(y)
-    # else:
-    #   return -np.log(1 - y)
-
+    m = labels.shape[1]   
+    cost = (1./m) * (-np.dot(labels,np.log(y).T) - np.dot(1-labels, np.log(1-y).T))
+    cost = np.squeeze(cost)  # makes sure cost is the dimension we expect.
+    return cost
 def derivative_Cross_Entropy(y, labels):
-    dc = (1-2*labels)/((1-labels) + ((2*labels-1)*y))
-    # print(dc)
+    a = np.divide(labels,y +1e-10)
+    # print("a",a)
+    b = np.divide(1-labels, 1-y +1e-10)
+    # print("b",b)
+    dc = -(a - b)
     return dc
+# def Cross_Entropy(y, labels):
+#     cost = -np.log((1-labels) + ((2*labels-1)*y))
+#     # print(cost)
+#     return cost.mean()
+#     # if labels == 1:
+#     #   return -np.log(y)
+#     # else:
+#     #   return -np.log(1 - y)
+
+# def derivative_Cross_Entropy(y, labels):
+#     dc = (1-2*labels)/((1-labels) + ((2*labels-1)*y))
+#     # print(dc)
+#     return dc
 def mse(x,y):
     return (((x-y)**2)*0.5).mean()
 def derivative_mse(x,y):
@@ -146,12 +146,12 @@ def show_results(x,labels,pred_y):
             plt.plot(x[i][0],x[i][1],'bo')
     plt.show()
 if __name__ == '__main__':
-    np.random.seed(3)
+    np.random.seed(5)
     # data,labels = generate_linear(n=100)
     data,labels = generate_XOR_easy() 
     x = data.T
     labels = labels.T
-    channels = [2,8,6,1]
+    channels = [2,6,6,1]
     fun_list = []
     for idx,(in_c,out_c) in enumerate(zip(channels[:-1],channels[1:])):
         fun_list.append(Linear(in_c,out_c))
@@ -160,27 +160,24 @@ if __name__ == '__main__':
 
         else:
             fun_list.append(Relu())
-    steps = 1000
-    lr = 0.007
+    steps = 10000
+    lr = 0.0003
     loss_list = []
     pred_y = []
     for step in range(steps):
         loss,y = train(x, labels,fun_list,lr)
         loss_list.append(loss)
         pred_y.append(y)
-
-        if step % 10:
-            lr = lr * 0.3
     print("labels",labels.squeeze()[0])
     print("pred_y",pred_y[0].squeeze()[0])
     print("pred_y",pred_y[-1].squeeze()[0])
     pred_y = pred_y[-1]
     print(pred_y)
-    # plt.plot(loss_list)
-    # plt.title('Loss')
-    # plt.ylabel('loss')
-    # plt.xlabel('epoch')
-    # plt.show()
+    plt.plot(loss_list)
+    plt.title('Loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.show()
     # print(1.0*(pred_y>0.48))
     show_results(data,labels,1.0*(pred_y>0.5))
 
