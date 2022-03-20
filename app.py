@@ -25,7 +25,7 @@ def generate_XOR_easy():
     return np.array(inputs),np.array(labels).reshape(21,1)
 class Linear():
     def __init__(self,in_c,out_c):
-        self.weight = np.random.randn(out_c,in_c) * 0.01
+        self.weight = np.random.randn(out_c,in_c) 
         self.bias = np.zeros([out_c, 1])
         self.x = None
         self.y = None
@@ -147,11 +147,11 @@ def show_results(x,labels,pred_y):
     plt.show()
 if __name__ == '__main__':
     np.random.seed(3)
-    data,labels = generate_linear(n=100)
-    # data,labels = generate_XOR_easy() 
+    # data,labels = generate_linear(n=100)
+    data,labels = generate_XOR_easy() 
     x = data.T
     labels = labels.T
-    channels = [2,8,3,1]
+    channels = [2,8,6,1]
     fun_list = []
     for idx,(in_c,out_c) in enumerate(zip(channels[:-1],channels[1:])):
         fun_list.append(Linear(in_c,out_c))
@@ -182,6 +182,6 @@ if __name__ == '__main__':
     # plt.xlabel('epoch')
     # plt.show()
     # print(1.0*(pred_y>0.48))
-    show_results(data,labels,1.0*(pred_y>0.48))
+    show_results(data,labels,1.0*(pred_y>0.5))
 
 
