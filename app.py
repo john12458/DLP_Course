@@ -65,6 +65,7 @@ def main(args):
     """ start train """
     loss_list = []
     acc_list = []
+    lr_list = []
     pred_y = None
     for step in range(steps):
         loss,y = train(data, labels,fun_list,lr,loss_f)
@@ -72,24 +73,31 @@ def main(args):
         pred_y = 1.0*(y>0.5)
         acc = (labels== pred_y).mean()
         acc_list.append(acc)
-        
+        lr_list.append(lr)
         if step % 10 ==0:
             print(f"[step:{step+1}/{steps}] loss: {loss:4f} | acc:{acc} | lr:{lr:8f}")
         if step % (steps//10) == 0:
             lr = lr* 0.9
         
     """ show result """
+    # lr
+    plt.subplot(3,1,1)
+    plt.plot(lr_list)
+    plt.ylabel('lr')
+    plt.xlabel('epoch')
+    plt.show()
     # loss
-    plt.subplot(2,1,1)
+    plt.subplot(3,1,2)
     plt.plot(loss_list)
     plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.subplot(2,1,2)
     # acc
+    plt.subplot(3,1,3)
     plt.plot(acc_list)
     plt.ylabel('acc')
     plt.xlabel('epoch')
     plt.show()
+  
     # result
     show_results(data,labels,pred_y)
 
