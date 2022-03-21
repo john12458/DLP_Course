@@ -64,21 +64,34 @@ def main(args):
             fun_list.append(Relu())
     """ start train """
     loss_list = []
-    pred_list = []
+    acc_list = []
+    pred_y = None
     for step in range(steps):
         loss,y = train(data, labels,fun_list,lr,loss_f)
         loss_list.append(loss)
-        pred_list.append(1.0*(y>0.5))
-        # if step % 100 == 0:
-        #     lr = lr* 0.09
+        pred_y = 1.0*(y>0.5)
+        acc = (labels== pred_y).mean()
+        acc_list.append(acc)
+        
+        if step % 10 ==0:
+            print(f"[step:{step+1}/{steps}] loss: {loss:4f} | acc:{acc} | lr:{lr:8f}")
+        if step % (steps//10) == 0:
+            lr = lr* 0.9
+        
     """ show result """
+    # loss
+    plt.subplot(2,1,1)
     plt.plot(loss_list)
-    plt.title('Loss')
     plt.ylabel('loss')
     plt.xlabel('epoch')
+    plt.subplot(2,1,2)
+    # acc
+    plt.plot(acc_list)
+    plt.ylabel('acc')
+    plt.xlabel('epoch')
     plt.show()
-    # print(1.0*(pred_y>0.48))
-    show_results(data,labels,pred_list[-1])
+    # result
+    show_results(data,labels,pred_y)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
