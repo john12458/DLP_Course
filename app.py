@@ -32,9 +32,17 @@ def show_results(data,labels,pred_y):
     plt.subplot(1,2,2) 
     plt.title("predict results",fontsize=18)
     _plot_data(data,pred_y)
-    plt.show()
 
 def main(args):
+    if args.wandb:
+        import wandb
+        wandb.init(project="dlp", entity="kycj")
+        unit_str = "" 
+        for unit in args.unit:
+            unit_str += str(unit) + "_"
+        act_str = "activate" if args.use_activate else ""
+        wandb.run.name = f"{args.data}_{unit_str}_{act_str}"
+        wandb.config.update(args)
         
     np.random.seed(5)
     lr,steps = args.lr,args.step
@@ -51,17 +59,18 @@ def main(args):
         loss_f =  MSE()
     else:
         loss_f =  Cross_Entropy()
+    print("loss: ",loss_f.__class__.__name__)
 
     channels = [2] + args.unit + [1]
     """ create model """
-    print("channel",channels)
+    print("channel: ",channels)
+    print("use activate") if args.use_activate else print("without activate")
     fun_list = []
     for idx,(in_c,out_c) in enumerate(zip(channels[:-1],channels[1:])):
         fun_list.append(Linear(in_c,out_c))
-        if idx == len(channels)-2: # last layer
-            fun_list.append(Sigmoid())
-        else:
-            fun_list.append(Relu())
+        if args.use_activate:
+            activate_f = Sigmoid() if idx == len(channels[:-1])-1 else Relu() # last layer use sigmoid
+            fun_list.append(activate_f)
     """ start train """
     loss_list = []
     acc_list = []
@@ -76,38 +85,50 @@ def main(args):
         lr_list.append(lr)
         if step % 10 ==0:
             print(f"[step:{step+1}/{steps}] loss: {loss:4f} | acc:{acc} | lr:{lr:8f}")
+        if args.wandb:
+            wandb.log({"loss":loss,"acc":acc,"lr":lr})
         if step % (steps//10) == 0:
             lr = lr* 0.9
         
     """ show result """
-    # lr
-    plt.subplot(3,1,1)
-    plt.plot(lr_list)
-    plt.ylabel('lr')
-    plt.xlabel('epoch')
-    plt.show()
-    # loss
-    plt.subplot(3,1,2)
-    plt.plot(loss_list)
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    # acc
-    plt.subplot(3,1,3)
-    plt.plot(acc_list)
-    plt.ylabel('acc')
-    plt.xlabel('epoch')
-    plt.show()
+    if not args.wandb:
+        # loss
+        plt.subplot(2,1,1)
+        plt.plot(loss_list)
+        plt.ylabel('loss')
+        plt.xlabel('epoch')
+        # acc
+        plt.subplot(2,1,2)
+        plt.plot(acc_list)
+        plt.ylabel('acc')
+        plt.xlabel('epoch')
+        plt.show()
+        # lr
+        plt.figure()
+        plt.plot(lr_list)
+        plt.ylabel('lr')
+        plt.xlabel('epoch')
+        plt.show()
   
     # result
     show_results(data,labels,pred_y)
+    if not args.wandb:
+        plt.show() 
+
+    if args.wandb:
+        wandb.log({"result": wandb.Image(plt)})
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default= "linear",type=str,help="linear,xor")
-    parser.add_argument("--loss", default= "mse",type=str,help="mse,cross_entropy")
+    parser.add_argument("--loss", default= "cross_entropy",type=str,help="mse,cross_entropy")
     parser.add_argument("--lr", default=0.0003 ,type=float,help="learning rate")
     parser.add_argument("--step",default=50000,type=int,help="iteration you train")
     parser.add_argument('--unit',default=[6,6], type=int, nargs='+')
+    parser.add_argument('--use_activate',default=False, action="store_true")
+    parser.add_argument('--wandb',default=False, action="store_true")
+    
+
     args = parser.parse_args()
 
     main(args)
