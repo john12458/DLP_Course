@@ -25,18 +25,18 @@ def generate_XOR_easy():
     return np.array(inputs),np.array(labels).reshape(21,1)
 class Linear():
     def __init__(self,in_c,out_c):
-        self.weight = np.random.randn(out_c,in_c) 
-        self.bias = np.zeros([out_c, 1])
+        self.weight = np.random.randn(in_c,out_c) 
+        self.bias = np.zeros([1,out_c])
         self.x = None
         self.y = None
     def forward(self,x):
         self.x = x
-        self.y = np.dot(self.weight, self.x) + self.bias  # x = [21,2], W = [2,1] ,y = [21,1]
+        self.y = np.dot(self.x,self.weight) + self.bias  # x = [21,2], W = [2,1] ,y = [21,1]
         return self.y
     def backward(self,grad,lr):
         #z2 = a1w2 --> dw2 = a1.T @ G
-        new_grad = np.dot(self.weight.T, grad)
-        grad_for_weight = np.dot(grad,self.x.T)
+        new_grad = np.dot(grad,self.weight.T)
+        grad_for_weight = np.dot(self.x.T,grad)
         grad_for_bias = np.sum(grad,axis=1,keepdims=True)
         # print("grad_for_weight ",grad_for_weight )
         self.weight = self.weight - lr*grad_for_weight
@@ -126,30 +126,32 @@ def train(x, labels,fun_list,lr):
 
     return loss,y
 def plot_data(data,labels):
-    color_label = ['red' if i==0 else 'blue' for i in labels.squeeze()]
+    color_label = ['red' if i==0 else 'blue' for i in labels]
     plt.scatter(data[:,0],data[:,1],c= color_label)
-def show_results(x,labels,pred_y):
+def show_results(data,labels,pred_y):
     plt.subplot(1,2,1)
     plt.title("Ground truth",fontsize=18)
-    for i in range(x.shape[0]):
-        if labels.T[i] == 0:
-            plt.plot(x[i][0],x[i][1],'ro')
-        else:
-            plt.plot(x[i][0],x[i][1],'bo')
+    plot_data(data,labels)
+    # for i in range(x.shape[0]):
+    #     if labels.T[i] == 0:
+    #         plt.plot(x[i][0],x[i][1],'ro')
+    #     else:
+    #         plt.plot(x[i][0],x[i][1],'bo')
     plt.subplot(1,2,2) 
     plt.title("predict results",fontsize=18)
-    for i in range(x.shape[0]):
-        if pred_y.T[i] == 0:
-            plt.plot(x[i][0],x[i][1],'ro')
-        else:
-            plt.plot(x[i][0],x[i][1],'bo')
+    plot_data(data,pred_y)
+    # for i in range(x.shape[0]):
+    #     if pred_y.T[i] == 0:
+    #         plt.plot(x[i][0],x[i][1],'ro')
+    #     else:
+    #         plt.plot(x[i][0],x[i][1],'bo')
     plt.show()
 if __name__ == '__main__':
     np.random.seed(5)
     # data,labels = generate_linear(n=100)
     data,labels = generate_XOR_easy() 
-    x = data.T
-    labels = labels.T
+    x = data
+    labels = labels
     channels = [2,6,6,1]
     fun_list = []
     for idx,(in_c,out_c) in enumerate(zip(channels[:-1],channels[1:])):
@@ -159,7 +161,7 @@ if __name__ == '__main__':
 
         else:
             fun_list.append(Relu())
-    steps = 10000
+    steps = 50000
     lr = 0.0003
     loss_list = []
     pred_y = []
@@ -167,6 +169,8 @@ if __name__ == '__main__':
         loss,y = train(x, labels,fun_list,lr)
         loss_list.append(loss)
         pred_y.append(y)
+        # if step % 100 == 0:
+        #     lr = lr* 0.09
     print("labels",labels.squeeze()[0])
     print("pred_y",pred_y[0].squeeze()[0])
     print("pred_y",pred_y[-1].squeeze()[0])
